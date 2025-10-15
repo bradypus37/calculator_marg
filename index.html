@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Калькулятор бюджета</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .calc { border: 1px solid #ccc; padding: 20px; border-radius: 10px; width: 300px; }
+    input { width: 100%; padding: 8px; margin: 5px 0; font-size: 16px; }
+    .result { margin-top: 10px; font-size: 16px; }
+    .label { font-weight: bold; margin-top: 10px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="calc">
+    <label class="label">Введите Кост (20%):</label>
+    <input type="number" id="cost" placeholder="Например: 500000" oninput="calculate()">
+
+    <div class="result">Для СЛ (22%): <span id="sl">-</span></div>
+    <div class="result">Для клиента (25%): <span id="client">-</span></div>
+    <div class="result">Бюджет (100%): <span id="budget">-</span></div>
+  </div>
+
+  <script>
+    function calculate() {
+      const cost = parseFloat(document.getElementById("cost").value);
+      if (isNaN(cost) || cost <= 0) {
+        document.getElementById("sl").textContent = "-";
+        document.getElementById("client").textContent = "-";
+        document.getElementById("budget").textContent = "-";
+        return;
+      }
+      const budget = cost / 0.20;      // 20% → 100%
+      const sl = budget * 0.22;        // 22%
+      const client = budget * 0.25;    // 25%
+
+      document.getElementById("sl").textContent = sl.toLocaleString("ru-RU");
+      document.getElementById("client").textContent = client.toLocaleString("ru-RU");
+      document.getElementById("budget").textContent = budget.toLocaleString("ru-RU");
+    }
+  </script>
+</body>
+</html>
