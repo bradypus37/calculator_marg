@@ -13,10 +13,10 @@
 </head>
 <body>
   <div class="calc">
-    <label class="label">Введите Кост (20%):</label>
+    <label class="label">Введите Кост (18%):</label>
     <input type="number" id="cost" placeholder="Например: 500000" oninput="calculate()">
 
-    <div class="result">Для СЛ (22%): <span id="sl">-</span></div>
+    <div class="result">Для СЛ (20%): <span id="sl">-</span></div>
     <div class="result">Для клиента (25%): <span id="client">-</span></div>
     <div class="result">Бюджет (100%): <span id="budget">-</span></div>
   </div>
@@ -30,8 +30,8 @@
         document.getElementById("budget").textContent = "-";
         return;
       }
-      const budget = cost / 0.20;      // 20% → 100%
-      const sl = budget * 0.22;        // 22%
+      const budget = cost / 0.18;      // 18% → 100%
+      const sl = budget * 0.20;        // 20%
       const client = budget * 0.25;    // 25%
 
       document.getElementById("sl").textContent = sl.toLocaleString("ru-RU");
