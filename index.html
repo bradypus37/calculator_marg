@@ -2,42 +2,828 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Калькулятор бюджета</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .calc { border: 1px solid #ccc; padding: 20px; border-radius: 10px; width: 300px; }
-    input { width: 100%; padding: 8px; margin: 5px 0; font-size: 16px; }
-    .result { margin-top: 10px; font-size: 16px; }
-    .label { font-weight: bold; margin-top: 10px; display: block; }
+    :root {
+      --calc-width: 352px;
+      --calc-radius: 14px;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    body {
+      position: relative;
+    }
+
+    #particles,
+    #overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+
+    #particles { z-index: 0; }
+    #overlay { z-index: 1; }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      padding: 12px;
+    }
+
+    .calc {
+      border: 1px solid #ccc;
+      padding: 22px;
+      border-radius: var(--calc-radius);
+      width: min(var(--calc-width), calc(100vw - 24px));
+      background: #fff;
+      box-shadow: var(--shadow);
+      position: absolute;
+      z-index: 3;
+      pointer-events: auto;
+      will-change: transform;
+    }
+
+    input {
+      width: 100%;
+      padding: 8.8px;
+      margin: 5.5px 0;
+      font-size: 17.6px;
+      border: 1px solid #cfcfcf;
+      border-radius: 8px;
+    }
+
+    .result {
+      margin-top: 11px;
+      font-size: 17.6px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 11px;
+      display: block;
+      position: relative;
+      z-index: 3;
+      font-size: 17.6px;
+    }
   </style>
 </head>
 <body>
-  <div class="calc">
-    <label class="label">Реальный кост (15%):</label>
-    <input type="number" id="cost" placeholder="Например: 500000" oninput="calculate()">
+  <canvas id="particles"></canvas>
+  <canvas id="overlay"></canvas>
 
-    <div class="result">Для СЛ (20%): <span id="sl">-</span></div>
-    <div class="result">Для клиента (25%): <span id="client">-</span></div>
-    <div class="result">Бюджет (100%): <span id="budget">-</span></div>
+  <div class="stage" id="stage">
+    <div class="calc" id="calc">
+      <label class="label">Реальный техкост (15%):</label>
+      <input type="text" inputmode="numeric" id="cost" placeholder="Например: 500 000" oninput="handleCostInput(event)">
+
+      <div class="result">Для СЛ (20%): <span id="sl">-</span></div>
+      <div class="result">Для клиента (25%): <span id="client">-</span></div>
+      <div class="result">Бюджет (100%): <span id="budget">-</span></div>
+    </div>
   </div>
 
   <script>
-    function calculate() {
-      const cost = parseFloat(document.getElementById("cost").value);
-      if (isNaN(cost) || cost <= 0) {
-        document.getElementById("sl").textContent = "-";
-        document.getElementById("client").textContent = "-";
-        document.getElementById("budget").textContent = "-";
+    function formatNumber(value) {
+      return value.toLocaleString('ru-RU');
+    }
+
+    function parseDigits(value) {
+      return value.replace(/\D/g, '');
+    }
+
+    function handleCostInput(event) {
+      markPreStartActivity();
+      const digits = parseDigits(event.target.value);
+      if (!digits) {
+        event.target.value = '';
+        calculate();
         return;
       }
-      const budget = cost / 0.15;      // 15% → 100%
-      const sl = budget * 0.20;        // 20%
-      const client = budget * 0.25;    // 25%
 
-      document.getElementById("sl").textContent = sl.toLocaleString("ru-RU");
-      document.getElementById("client").textContent = client.toLocaleString("ru-RU");
-      document.getElementById("budget").textContent = budget.toLocaleString("ru-RU");
+      event.target.value = formatNumber(Number(digits));
+      calculate();
     }
+
+    function calculate() {
+      const rawValue = parseDigits(document.getElementById('cost').value);
+      const cost = Number(rawValue);
+      if (!cost || cost <= 0) {
+        document.getElementById('sl').textContent = '-';
+        document.getElementById('client').textContent = '-';
+        document.getElementById('budget').textContent = '-';
+        return;
+      }
+
+      const budget = cost / 0.15;
+      const sl = budget * 0.20;
+      const client = budget * 0.25;
+
+      document.getElementById('sl').textContent = formatNumber(Math.round(sl));
+      document.getElementById('client').textContent = formatNumber(Math.round(client));
+      document.getElementById('budget').textContent = formatNumber(Math.round(budget));
+    }
+
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const octx = overlay.getContext('2d');
+    const calc = document.getElementById('calc');
+
+    const COLORS = [
+      { name: 'yellow', fill: '#FFC72C', power: 1 },
+      { name: 'blue', fill: '#00205B', power: 2 },
+      { name: 'red', fill: '#DA291C', power: 3 },
+      { name: 'green', fill: '#00B74F', power: 4 }
+    ];
+
+    const CONFIG = {
+      startupDelayMs: 37000,
+      initialTotal: 500,
+      initialWeights: [0.25, 0.25, 0.25, 0.25],
+      maxParticles: 900,
+      radiusMin: 7,
+      radiusMax: 10.5,
+      speedPxPerSec: 50,
+      collisionFactor: 1.08,
+      launchDurationMin: 0.28,
+      launchDurationMax: 0.48,
+      freezeDominanceRatio: 0.985,
+      freezeParticleRatio: 0.97,
+      spatialCellSize: 24,
+      calcSpeedPxPerSec: 50,
+      calcResumeDelayMs: 180,
+      calcReturnDurationMs: 500,
+      calcReturnSnapDistance: 1,
+      particleCollapseDuration: 0.22,
+      particleSuctionStrength: 10,
+      particleSuctionCurve: 1.8,
+      particleHoldScale: 0.18
+    };
+
+    let width = 0;
+    let height = 0;
+    let particles = [];
+    let collisionPairs = new Set();
+    let started = false;
+    let frozen = false;
+    let frozenColor = null;
+    let lastFrameTime = performance.now();
+    let startAt = performance.now() + CONFIG.startupDelayMs;
+    let lastPreStartActivityAt = performance.now();
+    let particlesCollapsing = false;
+    let particlesAwaitCenter = false;
+
+    const calcState = {
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      width: 0,
+      height: 0,
+      resumeAt: 0,
+      returning: false,
+      targetX: 0,
+      targetY: 0,
+      onCentered: null,
+      returnStartX: 0,
+      returnStartY: 0,
+      returnStartTime: 0,
+      returnDurationMs: 500
+    };
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      overlay.width = width;
+      overlay.height = height;
+      measureCalculator();
+      centerCalculator(true);
+    }
+
+    function measureCalculator() {
+      const rect = calc.getBoundingClientRect();
+      calcState.width = rect.width;
+      calcState.height = rect.height;
+    }
+
+    function applyCalcPosition() {
+      calc.style.left = `${calcState.x}px`;
+      calc.style.top = `${calcState.y}px`;
+    }
+
+    function centerCalculator(stopMotion = false) {
+      calcState.x = (width - calcState.width) / 2;
+      calcState.y = (height - calcState.height) / 2;
+      calcState.targetX = calcState.x;
+      calcState.targetY = calcState.y;
+      calcState.returning = false;
+      if (stopMotion) {
+        calcState.vx = 0;
+        calcState.vy = 0;
+      }
+      applyCalcPosition();
+    }
+
+    function markPreStartActivity() {
+      if (started || particlesCollapsing || particlesAwaitCenter) return;
+      lastPreStartActivityAt = performance.now();
+      startAt = lastPreStartActivityAt + CONFIG.startupDelayMs;
+      centerCalculator(true);
+    }
+
+    function beginCalculatorReturn(onCentered = null) {
+      calcState.targetX = (width - calcState.width) / 2;
+      calcState.targetY = (height - calcState.height) / 2;
+      calcState.returning = true;
+      calcState.onCentered = onCentered;
+      calcState.returnStartX = calcState.x;
+      calcState.returnStartY = calcState.y;
+      calcState.returnStartTime = performance.now();
+      calcState.returnDurationMs = CONFIG.calcReturnDurationMs;
+      calcState.vx = 0;
+      calcState.vy = 0;
+    }
+
+    function getCalcRect() {
+      return {
+        left: calcState.x,
+        right: calcState.x + calcState.width,
+        top: calcState.y,
+        bottom: calcState.y + calcState.height,
+        width: calcState.width,
+        height: calcState.height
+      };
+    }
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function setCalcRandomVelocity() {
+      const angle = Math.random() * Math.PI * 2;
+      calcState.vx = Math.cos(angle) * CONFIG.calcSpeedPxPerSec;
+      calcState.vy = Math.sin(angle) * CONFIG.calcSpeedPxPerSec;
+    }
+
+    function createParticle(color, x, y, boost = 1, angleOverride = null) {
+      const angle = angleOverride ?? Math.random() * Math.PI * 2;
+      const speed = CONFIG.speedPxPerSec * boost;
+      return {
+        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random()}`,
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        r: rand(CONFIG.radiusMin, CONFIG.radiusMax),
+        color,
+        launchPhase: true,
+        launchTimeLeft: rand(CONFIG.launchDurationMin, CONFIG.launchDurationMax),
+        pulseTime: 0,
+        pulseDuration: 0.18,
+        collapseScale: 1
+      };
+    }
+
+    function setParticleSpeed(particle, targetSpeed = CONFIG.speedPxPerSec) {
+      const speed = Math.hypot(particle.vx, particle.vy);
+      if (speed < 0.0001) {
+        const angle = Math.random() * Math.PI * 2;
+        particle.vx = Math.cos(angle) * targetSpeed;
+        particle.vy = Math.sin(angle) * targetSpeed;
+        return;
+      }
+
+      particle.vx = particle.vx / speed * targetSpeed;
+      particle.vy = particle.vy / speed * targetSpeed;
+    }
+
+    function pointInsideRect(x, y, rect, pad = 0) {
+      return x > rect.left - pad && x < rect.right + pad && y > rect.top - pad && y < rect.bottom + pad;
+    }
+
+    function spawnFromCalculatorEdge(color, angle) {
+      const rect = getCalcRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const halfW = rect.width / 2;
+      const halfH = rect.height / 2;
+      const dx = Math.cos(angle);
+      const dy = Math.sin(angle);
+      const radius = rand(CONFIG.radiusMin, CONFIG.radiusMax);
+      const tx = dx === 0 ? Number.POSITIVE_INFINITY : halfW / Math.abs(dx);
+      const ty = dy === 0 ? Number.POSITIVE_INFINITY : halfH / Math.abs(dy);
+      const t = Math.min(tx, ty);
+      const gap = radius + 2;
+      const x = cx + dx * (t + gap);
+      const y = cy + dy * (t + gap);
+      return createParticle(color, x, y, 1, angle);
+    }
+
+    function seedParticles() {
+      particles = [];
+
+      COLORS.forEach((color, index) => {
+        const count = Math.round(CONFIG.initialTotal * CONFIG.initialWeights[index]);
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 * particles.length) / CONFIG.initialTotal;
+          particles.push(spawnFromCalculatorEdge(color, angle));
+        }
+      });
+
+      while (particles.length < CONFIG.initialTotal) {
+        const color = COLORS[particles.length % COLORS.length];
+        const angle = (Math.PI * 2 * particles.length) / CONFIG.initialTotal;
+        particles.push(spawnFromCalculatorEdge(color, angle));
+      }
+
+      if (particles.length > CONFIG.initialTotal) {
+        particles.length = CONFIG.initialTotal;
+      }
+    }
+
+    function startSimulation() {
+      if (started) return;
+      started = true;
+      particlesCollapsing = false;
+      particlesAwaitCenter = false;
+      setCalcRandomVelocity();
+      seedParticles();
+      lastFrameTime = performance.now();
+      requestAnimationFrame(tick);
+    }
+
+    function resolveBoundaryCollision(particle, rect) {
+      let collided = false;
+      let nx = 0;
+      let ny = 0;
+
+      if (particle.x - particle.r <= 0) {
+        particle.x = particle.r;
+        nx = 1;
+        ny = 0;
+        collided = true;
+      } else if (particle.x + particle.r >= width) {
+        particle.x = width - particle.r;
+        nx = -1;
+        ny = 0;
+        collided = true;
+      }
+
+      if (particle.y - particle.r <= 0) {
+        particle.y = particle.r;
+        nx = 0;
+        ny = 1;
+        collided = true;
+      } else if (particle.y + particle.r >= height) {
+        particle.y = height - particle.r;
+        nx = 0;
+        ny = -1;
+        collided = true;
+      }
+
+      if (pointInsideRect(particle.x, particle.y, rect, particle.r)) {
+        const distances = [
+          { side: 'left', value: Math.abs(particle.x - rect.left) },
+          { side: 'right', value: Math.abs(rect.right - particle.x) },
+          { side: 'top', value: Math.abs(particle.y - rect.top) },
+          { side: 'bottom', value: Math.abs(rect.bottom - particle.y) }
+        ].sort((a, b) => a.value - b.value);
+
+        switch (distances[0].side) {
+          case 'left':
+            particle.x = rect.left - particle.r;
+            nx = -1;
+            ny = 0;
+            break;
+          case 'right':
+            particle.x = rect.right + particle.r;
+            nx = 1;
+            ny = 0;
+            break;
+          case 'top':
+            particle.y = rect.top - particle.r;
+            nx = 0;
+            ny = -1;
+            break;
+          default:
+            particle.y = rect.bottom + particle.r;
+            nx = 0;
+            ny = 1;
+            break;
+        }
+        collided = true;
+      }
+
+      if (collided) {
+        const dot = particle.vx * nx + particle.vy * ny;
+        particle.vx = particle.vx - 2 * dot * nx;
+        particle.vy = particle.vy - 2 * dot * ny;
+        setParticleSpeed(particle, CONFIG.speedPxPerSec);
+      }
+    }
+
+    function updateCalculator(dt, now) {
+      if (!started || frozen) return;
+
+      if (calcState.returning) {
+        const elapsed = now - calcState.returnStartTime;
+        const t = Math.min(1, elapsed / calcState.returnDurationMs);
+        const eased = 1 - Math.pow(1 - t, 3);
+
+        calcState.x = calcState.returnStartX + (calcState.targetX - calcState.returnStartX) * eased;
+        calcState.y = calcState.returnStartY + (calcState.targetY - calcState.returnStartY) * eased;
+
+        if (
+          t >= 1 || (
+            Math.abs(calcState.targetX - calcState.x) < CONFIG.calcReturnSnapDistance &&
+            Math.abs(calcState.targetY - calcState.y) < CONFIG.calcReturnSnapDistance
+          )
+        ) {
+          calcState.x = calcState.targetX;
+          calcState.y = calcState.targetY;
+          calcState.vx = 0;
+          calcState.vy = 0;
+          calcState.returning = false;
+          const onCentered = calcState.onCentered;
+          calcState.onCentered = null;
+          calcState.resumeAt = now + CONFIG.calcResumeDelayMs;
+          applyCalcPosition();
+          if (typeof onCentered === 'function') {
+            onCentered();
+          } else if (!frozen) {
+            setCalcRandomVelocity();
+          }
+          return;
+        }
+
+        applyCalcPosition();
+        return;
+      }
+
+      if (now < calcState.resumeAt) return;
+
+      calcState.x += calcState.vx * dt;
+      calcState.y += calcState.vy * dt;
+
+      if (calcState.x <= 0) {
+        calcState.x = 0;
+        calcState.vx = Math.abs(calcState.vx);
+      } else if (calcState.x + calcState.width >= width) {
+        calcState.x = width - calcState.width;
+        calcState.vx = -Math.abs(calcState.vx);
+      }
+
+      if (calcState.y <= 0) {
+        calcState.y = 0;
+        calcState.vy = Math.abs(calcState.vy);
+      } else if (calcState.y + calcState.height >= height) {
+        calcState.y = height - calcState.height;
+        calcState.vy = -Math.abs(calcState.vy);
+      }
+
+      const speed = Math.hypot(calcState.vx, calcState.vy);
+      if (speed < 0.0001) {
+        setCalcRandomVelocity();
+      } else {
+        calcState.vx = calcState.vx / speed * CONFIG.calcSpeedPxPerSec;
+        calcState.vy = calcState.vy / speed * CONFIG.calcSpeedPxPerSec;
+      }
+
+      applyCalcPosition();
+    }
+
+    function getWinningColor(colorA, colorB) {
+      if (colorA.power === colorB.power) return null;
+      if (colorA.power === 1 && colorB.power === 4) return colorA;
+      if (colorB.power === 1 && colorA.power === 4) return colorB;
+      return colorA.power > colorB.power ? colorA : colorB;
+    }
+
+    function applyColorBattle(a, b) {
+      const winner = getWinningColor(a.color, b.color);
+      if (!winner) return;
+
+      if (Math.random() < 0.5) {
+        a.color = winner;
+        a.pulseTime = a.pulseDuration;
+      } else {
+        b.color = winner;
+        b.pulseTime = b.pulseDuration;
+      }
+    }
+
+    function resolveParticleCollisions() {
+      const grid = new Map();
+      const cellSize = CONFIG.spatialCellSize;
+      const neighborOffsets = [
+        [0, 0], [1, 0], [0, 1], [1, 1], [-1, 1]
+      ];
+      const currentPairs = new Set();
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const cellX = Math.floor(p.x / cellSize);
+        const cellY = Math.floor(p.y / cellSize);
+        const key = `${cellX},${cellY}`;
+        if (!grid.has(key)) grid.set(key, []);
+        grid.get(key).push(i);
+      }
+
+      for (const [key, indexes] of grid.entries()) {
+        const [cellX, cellY] = key.split(',').map(Number);
+
+        for (const [dxCell, dyCell] of neighborOffsets) {
+          const otherKey = `${cellX + dxCell},${cellY + dyCell}`;
+          if (!grid.has(otherKey)) continue;
+          const otherIndexes = grid.get(otherKey);
+
+          for (const i of indexes) {
+            for (const j of otherIndexes) {
+              if (i >= j) continue;
+
+              const a = particles[i];
+              const b = particles[j];
+              const dx = b.x - a.x;
+              const dy = b.y - a.y;
+              const distance = Math.hypot(dx, dy) || 0.0001;
+              const minDistance = (a.r + b.r) * CONFIG.collisionFactor;
+              if (distance >= minDistance) continue;
+
+              const pairKey = a.id < b.id ? `${a.id}|${b.id}` : `${b.id}|${a.id}`;
+              currentPairs.add(pairKey);
+
+              const nx = dx / distance;
+              const ny = dy / distance;
+              const overlap = (minDistance - distance) / 2;
+
+              a.x -= nx * overlap;
+              a.y -= ny * overlap;
+              b.x += nx * overlap;
+              b.y += ny * overlap;
+
+              a.vx = -nx * CONFIG.speedPxPerSec;
+              a.vy = -ny * CONFIG.speedPxPerSec;
+              b.vx = nx * CONFIG.speedPxPerSec;
+              b.vy = ny * CONFIG.speedPxPerSec;
+
+              if (!collisionPairs.has(pairKey)) {
+                applyColorBattle(a, b);
+              }
+            }
+          }
+        }
+      }
+
+      collisionPairs = currentPairs;
+    }
+
+    function getColorStats() {
+      const counts = Object.fromEntries(COLORS.map(c => [c.name, 0]));
+      for (const particle of particles) counts[particle.color.name]++;
+
+      const maxCount = Math.max(...Object.values(counts));
+      const dominantCandidates = COLORS.filter(color => counts[color.name] === maxCount);
+      const dominant = dominantCandidates[Math.floor(Math.random() * dominantCandidates.length)];
+      const dominantCount = counts[dominant.name];
+      const total = Math.max(1, particles.length);
+
+      return {
+        dominant,
+        dominantRatio: dominantCount / total,
+        particleRatio: total / CONFIG.maxParticles
+      };
+    }
+
+    function drawOverlayTint(rect) {
+      octx.clearRect(0, 0, width, height);
+
+      if (!frozen || !frozenColor) {
+        return;
+      }
+
+      octx.save();
+      octx.fillStyle = frozenColor.fill;
+      octx.globalAlpha = 1;
+      octx.fillRect(0, 0, width, height);
+      octx.clearRect(rect.left, rect.top, rect.width, rect.height);
+      octx.restore();
+    }
+
+    function maybeFreezeSimulation() {
+      if (frozen) return;
+      const stats = getColorStats();
+      if (
+        stats.dominantRatio >= CONFIG.freezeDominanceRatio &&
+        stats.particleRatio >= CONFIG.freezeParticleRatio
+      ) {
+        frozen = true;
+        frozenColor = stats.dominant;
+      }
+    }
+
+    function collapseParticles() {
+      particlesCollapsing = true;
+      particlesAwaitCenter = false;
+      const duration = CONFIG.particleCollapseDuration * 1000;
+      const start = performance.now();
+      const rect = getCalcRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      for (const particle of particles) {
+        particle.vx = 0;
+        particle.vy = 0;
+        particle.launchPhase = false;
+        particle.pulseTime = 0;
+        particle.collapseStartX = particle.x;
+        particle.collapseStartY = particle.y;
+      }
+
+      function finishReset() {
+        particles = [];
+        collisionPairs = new Set();
+        particlesCollapsing = false;
+        particlesAwaitCenter = false;
+        frozen = false;
+        frozenColor = null;
+        started = false;
+        markPreStartActivity();
+      }
+
+      function step(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const scale = 1 - t;
+        const pull = 1 - Math.pow(1 - t, CONFIG.particleSuctionCurve);
+
+        for (const particle of particles) {
+          particle.collapseScale = Math.max(CONFIG.particleHoldScale, scale);
+          particle.x = particle.collapseStartX + (centerX - particle.collapseStartX) * pull;
+          particle.y = particle.collapseStartY + (centerY - particle.collapseStartY) * pull;
+        }
+
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          particlesAwaitCenter = true;
+          for (const particle of particles) {
+            particle.collapseScale = CONFIG.particleHoldScale;
+          }
+          beginCalculatorReturn(() => {
+            const finalRect = getCalcRect();
+            const finalCenterX = finalRect.left + finalRect.width / 2;
+            const finalCenterY = finalRect.top + finalRect.height / 2;
+            const vanishStart = performance.now();
+            const vanishDuration = 140;
+
+            for (const particle of particles) {
+              particle.collapseStartX = particle.x;
+              particle.collapseStartY = particle.y;
+            }
+
+            function vanish(now2) {
+              const vt = Math.min(1, (now2 - vanishStart) / vanishDuration);
+              const scale2 = CONFIG.particleHoldScale * (1 - vt);
+              for (const particle of particles) {
+                particle.collapseScale = scale2;
+                particle.x = particle.collapseStartX + (finalCenterX - particle.collapseStartX) * vt;
+                particle.y = particle.collapseStartY + (finalCenterY - particle.collapseStartY) * vt;
+              }
+              if (vt < 1) {
+                requestAnimationFrame(vanish);
+              } else {
+                finishReset();
+              }
+            }
+
+            requestAnimationFrame(vanish);
+          });
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    function tick(now) {
+      const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+      lastFrameTime = now;
+
+      if (!started) {
+        ctx.clearRect(0, 0, width, height);
+        octx.clearRect(0, 0, width, height);
+        if (now >= startAt) {
+          startSimulation();
+        }
+        requestAnimationFrame(tick);
+        return;
+      }
+
+      updateCalculator(dt, now);
+      const rect = getCalcRect();
+
+      ctx.clearRect(0, 0, width, height);
+      drawOverlayTint(rect);
+
+      if (!frozen && !particlesCollapsing) {
+        for (const particle of particles) {
+          if (particle.launchPhase) {
+            particle.launchTimeLeft -= dt;
+            if (particle.launchTimeLeft <= 0) {
+              particle.launchPhase = false;
+            }
+          }
+
+          if (particle.pulseTime > 0) {
+            particle.pulseTime -= dt;
+          }
+
+          if (!particle.launchPhase) {
+            setParticleSpeed(particle);
+          }
+
+          particle.x += particle.vx * dt;
+          particle.y += particle.vy * dt;
+
+          resolveBoundaryCollision(particle, rect);
+        }
+
+        resolveParticleCollisions();
+        maybeFreezeSimulation();
+      }
+
+      for (const particle of particles) {
+        let scale = particle.collapseScale ?? 1;
+        if (particle.pulseTime > 0) {
+          const t = particle.pulseTime / particle.pulseDuration;
+          scale *= 1 + t * 0.9;
+        }
+
+        if (scale <= 0) continue;
+
+        ctx.beginPath();
+        ctx.fillStyle = particle.color.fill;
+        ctx.arc(particle.x, particle.y, particle.r * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', () => {
+      if (!started) {
+        markPreStartActivity();
+        return;
+      }
+
+      calcState.resumeAt = Number.POSITIVE_INFINITY;
+      if ((started || particles.length > 0) && !particlesCollapsing) {
+        collapseParticles();
+      } else if (!particlesAwaitCenter) {
+        beginCalculatorReturn();
+      }
+    });
+
+    ['mousedown', 'mouseup', 'keydown', 'keyup', 'touchstart', 'touchmove', 'pointerdown'].forEach((eventName) => {
+      window.addEventListener(eventName, () => {
+        if (!started) {
+          markPreStartActivity();
+        }
+      }, { passive: true });
+    });
+
+    ['focusin', 'input', 'click'].forEach((eventName) => {
+      calc.addEventListener(eventName, () => {
+        if (!started) {
+          markPreStartActivity();
+        }
+      });
+    });
+
+    resize();
+    requestAnimationFrame(tick);
   </script>
 </body>
 </html>
