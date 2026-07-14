@@ -9,21 +9,31 @@
       --calc-width: 352px;
       --calc-radius: 14px;
       --shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+      --border: #d7d7d7;
+      --text: #1f1f1f;
+      --muted: #6f6f6f;
+      --active: #1f1f1f;
+      --active-text: #ffffff;
+      --surface: #ffffff;
+      --background: #f5f5f5;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html, body {
+    html,
+    body {
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: var(--background);
+      color: var(--text);
     }
 
     body {
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -31,92 +41,278 @@
     }
 
     .calc {
-      border: 1px solid #ccc;
-      padding: 22px;
-      border-radius: var(--calc-radius);
       width: min(var(--calc-width), calc(100vw - 24px));
-      background: #fff;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--calc-radius);
+      background: var(--surface);
       box-shadow: var(--shadow);
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f0f0f0;
+    }
+
+    .mode-button {
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 160ms ease, color 160ms ease, transform 100ms ease;
+    }
+
+    .mode-button:hover {
+      color: var(--text);
+    }
+
+    .mode-button:active {
+      transform: scale(0.98);
+    }
+
+    .mode-button.active {
+      background: var(--active);
+      color: var(--active-text);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 17.6px;
+      font-weight: 700;
     }
 
     input {
       width: 100%;
-      padding: 8.8px;
-      margin: 5.5px 0;
-      font-size: 17.6px;
+      padding: 10px;
+      margin: 0;
       border: 1px solid #cfcfcf;
       border-radius: 8px;
+      font-size: 17.6px;
+      color: var(--text);
+      background: #ffffff;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #777;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .results {
+      margin-top: 17px;
+      padding-top: 3px;
+      border-top: 1px solid #ececec;
     }
 
     .result {
-      margin-top: 11px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 12px;
       font-size: 17.6px;
+      line-height: 1.35;
     }
 
-    .label {
-      font-weight: bold;
-      margin-top: 11px;
-      display: block;
-      font-size: 17.6px;
+    .result-label {
+      color: #3f3f3f;
+    }
+
+    .result-value {
+      flex-shrink: 0;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    @media (max-width: 390px) {
+      .calc {
+        padding: 18px;
+      }
+
+      .mode-button {
+        font-size: 14px;
+      }
+
+      .label,
+      input,
+      .result {
+        font-size: 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="calc">
-    <label class="label">Реальный техкост (15%):</label>
+  <main class="calc">
+    <div class="mode-switch" role="group" aria-label="Режим расчета">
+      <button
+        type="button"
+        class="mode-button active"
+        id="techModeButton"
+        aria-pressed="true"
+        onclick="setMode('tech')"
+      >
+        От техкоста
+      </button>
+
+      <button
+        type="button"
+        class="mode-button"
+        id="budgetModeButton"
+        aria-pressed="false"
+        onclick="setMode('budget')"
+      >
+        От бюджета
+      </button>
+    </div>
+
+    <label class="label" id="inputLabel" for="amount">
+      Реальный техкост (15%):
+    </label>
+
     <input
       type="text"
       inputmode="numeric"
-      id="cost"
+      id="amount"
       placeholder="Например: 500 000"
-      oninput="handleCostInput(event)"
+      autocomplete="off"
+      oninput="handleInput(event)"
     >
 
-    <div class="result">Для СЛ (20%): <span id="sl">-</span></div>
-    <div class="result">Для клиента (25%): <span id="client">-</span></div>
-    <div class="result">Бюджет (100%): <span id="budget">-</span></div>
-  </div>
+    <div class="results">
+      <div class="result" id="techResultRow" hidden style="display:none;">
+        <span class="result-label">Реальный техкост (15%):</span>
+        <span class="result-value" id="techResult">-</span>
+      </div>
+
+      <div class="result">
+        <span class="result-label">Для СЛ (20%):</span>
+        <span class="result-value" id="slResult">-</span>
+      </div>
+
+      <div class="result">
+        <span class="result-label">Для клиента (25%):</span>
+        <span class="result-value" id="clientResult">-</span>
+      </div>
+
+      <div class="result" id="budgetResultRow">
+        <span class="result-label">Бюджет (100%):</span>
+        <span class="result-value" id="budgetResult">-</span>
+      </div>
+    </div>
+  </main>
 
   <script>
+    let currentMode = 'tech';
+
+    const amountInput = document.getElementById('amount');
+    const inputLabel = document.getElementById('inputLabel');
+
+    const techModeButton = document.getElementById('techModeButton');
+    const budgetModeButton = document.getElementById('budgetModeButton');
+
+    const techResultRow = document.getElementById('techResultRow');
+    const budgetResultRow = document.getElementById('budgetResultRow');
+
+    const techResult = document.getElementById('techResult');
+    const slResult = document.getElementById('slResult');
+    const clientResult = document.getElementById('clientResult');
+    const budgetResult = document.getElementById('budgetResult');
+
     function formatNumber(value) {
-      return value.toLocaleString('ru-RU');
+      return Math.round(value).toLocaleString('ru-RU');
     }
 
     function parseDigits(value) {
       return value.replace(/\D/g, '');
     }
 
-    function handleCostInput(event) {
+    function clearResults() {
+      techResult.textContent = '-';
+      slResult.textContent = '-';
+      clientResult.textContent = '-';
+      budgetResult.textContent = '-';
+    }
+
+    function setMode(mode) {
+      if (mode !== 'tech' && mode !== 'budget') {
+        return;
+      }
+
+      currentMode = mode;
+      amountInput.value = '';
+      clearResults();
+
+      const isTechMode = mode === 'tech';
+
+      techModeButton.classList.toggle('active', isTechMode);
+      budgetModeButton.classList.toggle('active', !isTechMode);
+
+      techModeButton.setAttribute('aria-pressed', String(isTechMode));
+      budgetModeButton.setAttribute('aria-pressed', String(!isTechMode));
+
+      inputLabel.textContent = isTechMode
+        ? 'Реальный техкост (15%):'
+        : 'Бюджет (100%):';
+
+      amountInput.placeholder = isTechMode
+        ? 'Например: 500 000'
+        : 'Например: 3 000 000';
+
+      techResultRow.style.display = isTechMode ? 'none' : 'flex';
+      budgetResultRow.style.display = isTechMode ? 'flex' : 'none';
+
+      amountInput.focus();
+    }
+
+    function handleInput(event) {
       const digits = parseDigits(event.target.value);
 
       if (!digits) {
         event.target.value = '';
-        calculate();
+        clearResults();
         return;
       }
 
-      event.target.value = formatNumber(Number(digits));
-      calculate();
+      const value = Number(digits);
+      event.target.value = formatNumber(value);
+      calculate(value);
     }
 
-    function calculate() {
-      const rawValue = parseDigits(document.getElementById('cost').value);
-      const cost = Number(rawValue);
-
-      if (!cost || cost <= 0) {
-        document.getElementById('sl').textContent = '-';
-        document.getElementById('client').textContent = '-';
-        document.getElementById('budget').textContent = '-';
+    function calculate(value) {
+      if (!Number.isFinite(value) || value <= 0) {
+        clearResults();
         return;
       }
 
-      const budget = cost / 0.15;
+      let budget;
+      let techCost;
+
+      if (currentMode === 'tech') {
+        techCost = value;
+        budget = techCost / 0.15;
+      } else {
+        budget = value;
+        techCost = budget * 0.15;
+      }
+
       const sl = budget * 0.20;
       const client = budget * 0.25;
 
-      document.getElementById('sl').textContent = formatNumber(Math.round(sl));
-      document.getElementById('client').textContent = formatNumber(Math.round(client));
-      document.getElementById('budget').textContent = formatNumber(Math.round(budget));
+      techResult.textContent = formatNumber(techCost);
+      slResult.textContent = formatNumber(sl);
+      clientResult.textContent = formatNumber(client);
+      budgetResult.textContent = formatNumber(budget);
     }
   </script>
 </body>
