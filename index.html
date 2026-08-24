@@ -4,49 +4,61 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Калькулятор проекта</title>
+
 <style>
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
     background: #f5f6f7;
     color: #111;
   }
+
   .wrap {
     max-width: 1220px;
     margin: 40px auto;
     padding: 0 20px;
   }
+
   h1 {
     font-size: 28px;
     margin: 0 0 24px;
   }
+
   .grid {
     display: grid;
     grid-template-columns: 1fr 1.15fr;
     gap: 24px;
     align-items: start;
   }
+
   .card {
     background: #fff;
     border: 1px solid #d9dde1;
     border-radius: 14px;
     padding: 22px;
-    box-shadow: 0 3px 14px rgba(0,0,0,.04);
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
   }
+
   .card.over {
     border-color: #d83232;
     box-shadow: 0 0 0 1px #d83232;
   }
+
   .card h2 {
     font-size: 20px;
     margin: 0 0 18px;
   }
+
   .mode {
     display: flex;
     gap: 8px;
     margin-bottom: 18px;
   }
+
   .mode button {
     flex: 1;
     border: 1px solid #cfd4d8;
@@ -56,18 +68,22 @@
     cursor: pointer;
     font-size: 14px;
   }
+
   .mode button.active {
     background: #111;
     color: #fff;
     border-color: #111;
   }
+
   label {
     display: block;
     font-size: 15px;
     color: #555;
     margin-bottom: 7px;
   }
-  input, select {
+
+  input,
+  select {
     width: 100%;
     height: 42px;
     border: 1px solid #cfd4d8;
@@ -76,13 +92,16 @@
     background: #fff;
     font-size: 15px;
   }
+
   input::placeholder {
     color: #9aa2a9;
   }
+
   .results {
     margin-top: 20px;
     border-top: 1px solid #eceff1;
   }
+
   .result {
     display: flex;
     justify-content: space-between;
@@ -91,38 +110,49 @@
     border-bottom: 1px solid #eceff1;
     font-size: 15px;
   }
-  .result strong { white-space: nowrap; }
+
+  .result strong {
+    white-space: nowrap;
+  }
+
   .limit {
     padding: 14px;
     border-radius: 10px;
     background: #f0f5ee;
     margin-bottom: 18px;
   }
+
   .limit small {
     display: block;
     color: #59625a;
     margin-bottom: 5px;
   }
+
   .limit strong {
     font-size: 21px;
   }
+
   .rows {
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
+
   .cost-row {
     display: grid;
-    grid-template-columns: 1.2fr 1fr .8fr 36px;
+    grid-template-columns: 1.2fr 1fr 0.8fr 36px;
     gap: 8px;
     align-items: center;
   }
+
   .custom-name {
     display: none;
   }
+
   .cost-row.other .custom-name {
     display: block;
   }
+
   .remove {
     width: 36px;
     height: 36px;
@@ -132,6 +162,7 @@
     cursor: pointer;
     font-size: 18px;
   }
+
   .add {
     margin-top: 12px;
     width: 100%;
@@ -142,32 +173,41 @@
     cursor: pointer;
     font-size: 14px;
   }
+
   .summary {
     margin-top: 18px;
     padding-top: 16px;
     border-top: 1px solid #e1e4e6;
   }
+
   .summary-line {
     display: flex;
     justify-content: space-between;
     gap: 20px;
     padding: 8px 0;
   }
+
   .summary-line.total,
   .summary-line.saving {
     font-size: 18px;
     font-weight: 700;
   }
+
   .negative {
     color: #d21f1f;
   }
-@media (max-width: 980px) {
-    .grid { grid-template-columns: 1fr; }
+
+  @media (max-width: 980px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
   }
+
   @media (max-width: 680px) {
     .cost-row {
       grid-template-columns: 1fr;
     }
+
     .remove {
       width: 100%;
       height: 40px;
@@ -175,11 +215,14 @@
   }
 </style>
 </head>
+
 <body>
+
 <div class="wrap">
   <h1>Калькулятор проекта</h1>
 
   <div class="grid">
+
     <section class="card">
       <h2>Маржинальность</h2>
 
@@ -188,30 +231,53 @@
         <button id="modeBudget">От бюджета</button>
       </div>
 
-      <label id="mainLabel" for="mainInput">Реальный техкост (15%), ₽</label>
-      <input id="mainInput" type="number" min="0" step="1000" inputmode="numeric" value="" placeholder="Введите сумму" />
+      <label id="mainLabel" for="mainInput">
+        Реальный техкост (15%), ₽
+      </label>
+
+      <input
+        id="mainInput"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        value=""
+        placeholder="Введите сумму"
+      />
 
       <div class="results">
-        <div class="result" id="budgetRow">
-          <span>Бюджет (100%)</span>
-          <strong id="budgetResult">—</strong>
-        </div>
+
         <div class="result">
           <span>СЛ (20%)</span>
           <strong id="slResult">—</strong>
         </div>
+
         <div class="result">
           <span>Кост клиента (25%)</span>
           <strong id="clientResult">—</strong>
         </div>
-        <div class="result" id="techRow" style="display:none;">
+
+        <div
+          class="result"
+          id="techRow"
+          style="display: none;"
+        >
           <span>Реальный техкост (15%)</span>
           <strong id="techResult">—</strong>
         </div>
+
+        <div class="result" id="budgetRow">
+          <span>Бюджет (100%)</span>
+          <strong id="budgetResult">—</strong>
+        </div>
+
       </div>
     </section>
 
-    <section class="card" id="projectCard">
+
+    <section
+      class="card"
+      id="projectCard"
+    >
       <h2>Рассчитать техкост</h2>
 
       <div class="limit">
@@ -219,21 +285,33 @@
         <strong id="techLimit">—</strong>
       </div>
 
-      <div class="rows" id="rows"></div>
+      <div
+        class="rows"
+        id="rows"
+      ></div>
 
-      <button class="add" id="addRow">+ Добавить работу</button>
+      <button
+        class="add"
+        id="addRow"
+      >
+        + Добавить работу
+      </button>
 
       <div class="summary">
+
         <div class="summary-line total">
           <span>Реальные затраты</span>
           <span id="realCosts">0 ₽</span>
         </div>
+
         <div class="summary-line saving">
           <span>Экономия</span>
           <span id="savingValue">—</span>
         </div>
+
       </div>
-</section>
+    </section>
+
   </div>
 </div>
 
@@ -243,12 +321,30 @@
   'use strict';
 
   const SERVICES = [
-    { name: 'Верстка и программинг проекта', defaultCost: null },
-    { name: 'Написание текста / текстов', defaultCost: null },
-    { name: 'Настройка аналитики', defaultCost: 15000 },
-    { name: 'Дизайн', defaultCost: null },
-    { name: 'Закупка трафика', defaultCost: null },
-    { name: 'Другое', defaultCost: null }
+    {
+      name: 'Верстка и программинг проекта',
+      defaultCost: null
+    },
+    {
+      name: 'Написание текста / текстов',
+      defaultCost: null
+    },
+    {
+      name: 'Настройка аналитики',
+      defaultCost: 15000
+    },
+    {
+      name: 'Дизайн',
+      defaultCost: null
+    },
+    {
+      name: 'Закупка трафика',
+      defaultCost: null
+    },
+    {
+      name: 'Другое',
+      defaultCost: null
+    }
   ];
 
   const TECH_SHARE = 0.15;
@@ -276,55 +372,141 @@
     addRow: document.getElementById('addRow')
   };
 
-  const formatMoney = (value) =>
-    new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 })
-      .format(Number(value) || 0) + ' ₽';
 
-  const hasMainValue = () =>
-    els.mainInput.value.trim() !== '' &&
-    Number.isFinite(Number(els.mainInput.value)) &&
-    Number(els.mainInput.value) >= 0;
+  const parseMoneyInput = (value) => {
+    const digits = String(value).replace(/\D/g, '');
+
+    return digits
+      ? Number(digits)
+      : null;
+  };
+
+
+  const formatMoneyInput = (value) => {
+    const numeric = parseMoneyInput(value);
+
+    if (numeric === null) {
+      return '';
+    }
+
+    return new Intl.NumberFormat(
+      'ru-RU',
+      {
+        maximumFractionDigits: 0
+      }
+    ).format(numeric);
+  };
+
+
+  const formatMoney = (value) => {
+    return new Intl.NumberFormat(
+      'ru-RU',
+      {
+        maximumFractionDigits: 0
+      }
+    ).format(Number(value) || 0) + ' ₽';
+  };
+
+
+  const hasMainValue = () => {
+    const value = parseMoneyInput(
+      els.mainInput.value
+    );
+
+    return (
+      value !== null &&
+      Number.isFinite(value) &&
+      value >= 0
+    );
+  };
+
 
   const getAvailableTechCost = () => {
-    if (!hasMainValue()) return null;
-    const value = Number(els.mainInput.value);
-    return mode === 'tech' ? value : value * TECH_SHARE;
+    if (!hasMainValue()) {
+      return null;
+    }
+
+    const value = parseMoneyInput(
+      els.mainInput.value
+    );
+
+    if (mode === 'tech') {
+      return value;
+    }
+
+    return value * TECH_SHARE;
   };
+
 
   const calculateRealCosts = () => {
     let total = 0;
-    els.rows.querySelectorAll('.cost-input').forEach((input) => {
-      const value = Number(input.value);
-      if (Number.isFinite(value) && value > 0) total += value;
-    });
+
+    els.rows
+      .querySelectorAll('.cost-input')
+      .forEach((input) => {
+        const value = Number(input.value);
+
+        if (
+          Number.isFinite(value) &&
+          value > 0
+        ) {
+          total += value;
+        }
+      });
+
     return total;
   };
+
 
   const updateProject = () => {
     const limit = getAvailableTechCost();
     const costs = calculateRealCosts();
 
-    els.realCosts.textContent = formatMoney(costs);
+    els.realCosts.textContent =
+      formatMoney(costs);
 
     if (limit === null) {
       els.techLimit.textContent = '—';
       els.savingValue.textContent = '—';
-      els.savingValue.classList.remove('negative');
-      els.projectCard.classList.remove('over');
+
+      els.savingValue
+        .classList
+        .remove('negative');
+
+      els.projectCard
+        .classList
+        .remove('over');
+
       return;
     }
 
-    els.techLimit.textContent = formatMoney(limit);
+    els.techLimit.textContent =
+      formatMoney(limit);
 
     const saving = limit - costs;
     const isOver = saving < 0;
 
     els.savingValue.textContent =
-      (isOver ? '−' : '') + formatMoney(Math.abs(saving));
+      (isOver ? '−' : '') +
+      formatMoney(
+        Math.abs(saving)
+      );
 
-    els.savingValue.classList.toggle('negative', isOver);
-    els.projectCard.classList.toggle('over', isOver);
+    els.savingValue
+      .classList
+      .toggle(
+        'negative',
+        isOver
+      );
+
+    els.projectCard
+      .classList
+      .toggle(
+        'over',
+        isOver
+      );
   };
+
 
   const updateMargin = () => {
     if (!hasMainValue()) {
@@ -332,127 +514,371 @@
       els.slResult.textContent = '—';
       els.clientResult.textContent = '—';
       els.techResult.textContent = '—';
+
       updateProject();
+
       return;
     }
 
-    const value = Number(els.mainInput.value);
-    const budget = mode === 'tech' ? value / TECH_SHARE : value;
-    const tech = mode === 'tech' ? value : value * TECH_SHARE;
+    const value = parseMoneyInput(
+      els.mainInput.value
+    );
 
-    els.budgetResult.textContent = formatMoney(budget);
-    els.slResult.textContent = formatMoney(budget * SL_SHARE);
-    els.clientResult.textContent = formatMoney(budget * CLIENT_COST_SHARE);
-    els.techResult.textContent = formatMoney(tech);
+    const budget =
+      mode === 'tech'
+        ? value / TECH_SHARE
+        : value;
+
+    const tech =
+      mode === 'tech'
+        ? value
+        : value * TECH_SHARE;
+
+    els.budgetResult.textContent =
+      formatMoney(budget);
+
+    els.slResult.textContent =
+      formatMoney(
+        budget * SL_SHARE
+      );
+
+    els.clientResult.textContent =
+      formatMoney(
+        budget * CLIENT_COST_SHARE
+      );
+
+    els.techResult.textContent =
+      formatMoney(tech);
 
     updateProject();
   };
 
+
   const createServiceSelect = () => {
-    const select = document.createElement('select');
+    const select =
+      document.createElement('select');
 
-    const placeholder = document.createElement('option');
+    const placeholder =
+      document.createElement('option');
+
     placeholder.value = '';
-    placeholder.textContent = 'Выберите работу';
-    select.appendChild(placeholder);
+    placeholder.textContent =
+      'Выберите услугу';
 
-    SERVICES.forEach(({ name }) => {
-      const option = document.createElement('option');
-      option.value = name;
-      option.textContent = name;
-      select.appendChild(option);
-    });
+    select.appendChild(
+      placeholder
+    );
+
+    SERVICES.forEach(
+      ({ name }) => {
+        const option =
+          document.createElement(
+            'option'
+          );
+
+        option.value = name;
+        option.textContent = name;
+
+        select.appendChild(
+          option
+        );
+      }
+    );
 
     return select;
   };
 
-  const addCostRow = ({ service = '', cost = '', customName = '' } = {}) => {
-    const row = document.createElement('div');
+
+  const addCostRow = (
+    {
+      service = '',
+      cost = '',
+      customName = ''
+    } = {}
+  ) => {
+
+    const row =
+      document.createElement('div');
+
     row.className = 'cost-row';
 
-    const select = createServiceSelect();
+
+    const select =
+      createServiceSelect();
+
     select.value = service;
 
-    const customNameInput = document.createElement('input');
-    customNameInput.type = 'text';
-    customNameInput.placeholder = 'Название работы';
-    customNameInput.className = 'custom-name';
-    customNameInput.value = customName;
 
-    const costInput = document.createElement('input');
+    const customNameInput =
+      document.createElement('input');
+
+    customNameInput.type = 'text';
+    customNameInput.placeholder =
+      'Название работы';
+    customNameInput.className =
+      'custom-name';
+    customNameInput.value =
+      customName;
+
+
+    const costInput =
+      document.createElement('input');
+
     costInput.type = 'number';
     costInput.min = '0';
     costInput.step = '1000';
     costInput.inputMode = 'numeric';
-    costInput.placeholder = 'Стоимость, ₽';
-    costInput.className = 'cost-input';
-    costInput.value = cost;
+    costInput.placeholder =
+      'Стоимость, ₽';
+    costInput.className =
+      'cost-input';
+    costInput.value =
+      cost;
 
-    const removeButton = document.createElement('button');
-    removeButton.className = 'remove';
-    removeButton.type = 'button';
-    removeButton.setAttribute('aria-label', 'Удалить работу');
-    removeButton.textContent = '×';
+
+    const removeButton =
+      document.createElement(
+        'button'
+      );
+
+    removeButton.className =
+      'remove';
+
+    removeButton.type =
+      'button';
+
+    removeButton.setAttribute(
+      'aria-label',
+      'Удалить работу'
+    );
+
+    removeButton.textContent =
+      '×';
+
 
     const refreshRowState = () => {
-      const isOther = select.value === 'Другое';
-      row.classList.toggle('other', isOther);
-      customNameInput.required = isOther;
+      const isOther =
+        select.value === 'Другое';
 
-      if (!isOther) customNameInput.value = '';
+      row.classList.toggle(
+        'other',
+        isOther
+      );
+
+      customNameInput.required =
+        isOther;
+
+      if (!isOther) {
+        customNameInput.value =
+          '';
+      }
     };
 
-    select.addEventListener('change', () => {
-      const selected = SERVICES.find(({ name }) => name === select.value);
 
-      if (selected?.defaultCost != null) {
-        costInput.value = selected.defaultCost;
-      } else if (!select.value) {
-        costInput.value = '';
+    select.addEventListener(
+      'change',
+      () => {
+        const selected =
+          SERVICES.find(
+            ({ name }) =>
+              name === select.value
+          );
+
+        if (
+          selected?.defaultCost != null
+        ) {
+          costInput.value =
+            selected.defaultCost;
+        }
+        else if (!select.value) {
+          costInput.value =
+            '';
+        }
+
+        refreshRowState();
+        updateProject();
       }
+    );
 
-      refreshRowState();
-      updateProject();
-    });
 
-    costInput.addEventListener('input', updateProject);
-    customNameInput.addEventListener('input', updateProject);
+    costInput.addEventListener(
+      'input',
+      updateProject
+    );
 
-    removeButton.addEventListener('click', () => {
-      row.remove();
-      updateProject();
-    });
 
-    row.append(select, customNameInput, costInput, removeButton);
-    els.rows.appendChild(row);
+    customNameInput.addEventListener(
+      'input',
+      updateProject
+    );
+
+
+    removeButton.addEventListener(
+      'click',
+      () => {
+        row.remove();
+        updateProject();
+      }
+    );
+
+
+    row.append(
+      select,
+      customNameInput,
+      costInput,
+      removeButton
+    );
+
+
+    els.rows.appendChild(
+      row
+    );
 
     refreshRowState();
     updateProject();
   };
 
+
   const setMode = (nextMode) => {
     mode = nextMode;
-    const isTechMode = mode === 'tech';
 
-    els.modeTech.classList.toggle('active', isTechMode);
-    els.modeBudget.classList.toggle('active', !isTechMode);
+    const isTechMode =
+      mode === 'tech';
+
+    els.modeTech
+      .classList
+      .toggle(
+        'active',
+        isTechMode
+      );
+
+    els.modeBudget
+      .classList
+      .toggle(
+        'active',
+        !isTechMode
+      );
 
     els.mainLabel.textContent =
-      isTechMode ? 'Реальный техкост (15%), ₽' : 'Бюджет проекта, ₽';
+      isTechMode
+        ? 'Реальный техкост (15%), ₽'
+        : 'Бюджет проекта, ₽';
 
-    els.budgetRow.style.display = isTechMode ? 'flex' : 'none';
-    els.techRow.style.display = isTechMode ? 'none' : 'flex';
+    els.budgetRow.style.display =
+      'flex';
+
+    els.techRow.style.display =
+      isTechMode
+        ? 'none'
+        : 'flex';
+
+    els.mainInput.value =
+      formatMoneyInput(
+        els.mainInput.value
+      );
 
     updateMargin();
   };
 
-  els.modeTech.addEventListener('click', () => setMode('tech'));
-  els.modeBudget.addEventListener('click', () => setMode('budget'));
-  els.mainInput.addEventListener('input', updateMargin);
-  els.addRow.addEventListener('click', () => addCostRow());
+
+  els.modeTech.addEventListener(
+    'click',
+    () => setMode('tech')
+  );
+
+
+  els.modeBudget.addEventListener(
+    'click',
+    () => setMode('budget')
+  );
+
+
+  els.mainInput.addEventListener(
+    'input',
+    () => {
+      const rawValue =
+        els.mainInput.value;
+
+      const selectionStart =
+        els.mainInput.selectionStart ?? rawValue.length;
+
+      const digitsBeforeCaret =
+        rawValue
+          .slice(
+            0,
+            selectionStart
+          )
+          .replace(
+            /\D/g,
+            ''
+          )
+          .length;
+
+      const formatted =
+        formatMoneyInput(
+          rawValue
+        );
+
+      els.mainInput.value =
+        formatted;
+
+      if (!formatted) {
+        updateMargin();
+        return;
+      }
+
+      let digitCount = 0;
+      let newCaretPosition =
+        formatted.length;
+
+      if (digitsBeforeCaret === 0) {
+        newCaretPosition = 0;
+      } else {
+        for (
+          let i = 0;
+          i < formatted.length;
+          i++
+        ) {
+          if (
+            /\d/.test(
+              formatted[i]
+            )
+          ) {
+            digitCount++;
+          }
+
+          if (
+            digitCount >=
+            digitsBeforeCaret
+          ) {
+            newCaretPosition =
+              i + 1;
+            break;
+          }
+        }
+      }
+
+      els.mainInput
+        .setSelectionRange(
+          newCaretPosition,
+          newCaretPosition
+        );
+
+      updateMargin();
+    }
+  );
+
+
+  els.addRow.addEventListener(
+    'click',
+    () => addCostRow()
+  );
+
 
   addCostRow();
+
   setMode('tech');
+
 })();
 </script>
 
