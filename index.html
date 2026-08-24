@@ -440,7 +440,7 @@
 
     const placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = 'Выберите работу';
+    placeholder.textContent = 'Выберите услугу';
     select.appendChild(placeholder);
 
     SERVICES.forEach(({ name }) => {
@@ -619,7 +619,12 @@
     () => addCostRow()
   );
 
-  addCostRow();
+  addCostRow({ service: 'Верстка и программинг проекта' });
+  addCostRow({ service: 'Написание текста / текстов' });
+  addCostRow({ service: 'Настройка аналитики', cost: 15000 });
+  addCostRow({ service: 'Дизайн' });
+  addCostRow({ service: 'Закупка трафика' });
+
   setMode('tech');
 })();
 </script>
