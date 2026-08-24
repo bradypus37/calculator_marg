@@ -1,319 +1,592 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Калькулятор бюджета</title>
-  <style>
-    :root {
-      --calc-width: 352px;
-      --calc-radius: 14px;
-      --shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
-      --border: #d7d7d7;
-      --text: #1f1f1f;
-      --muted: #6f6f6f;
-      --active: #1f1f1f;
-      --active-text: #ffffff;
-      --surface: #ffffff;
-      --background: #f5f5f5;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Калькулятор проекта</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f6f7;
+    color: #111;
+  }
+
+  .wrap {
+    max-width: 1220px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+
+  h1 {
+    font-size: 28px;
+    margin: 0 0 24px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid #d9dde1;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
+  }
+
+  .card.over {
+    border-color: #d83232;
+    box-shadow: 0 0 0 1px #d83232;
+  }
+
+  .card h2 {
+    font-size: 20px;
+    margin: 0 0 18px;
+  }
+
+  .mode {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .mode button {
+    flex: 1;
+    border: 1px solid #cfd4d8;
+    background: #fff;
+    padding: 10px 12px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .mode button.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 7px;
+  }
+
+  input,
+  select {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #cfd4d8;
+    border-radius: 8px;
+    padding: 0 12px;
+    background: #fff;
+    font-size: 15px;
+  }
+
+  input::placeholder {
+    color: #9aa2a9;
+  }
+
+  .results {
+    margin-top: 20px;
+    border-top: 1px solid #eceff1;
+  }
+
+  .result {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eceff1;
+    font-size: 15px;
+  }
+
+  .result strong {
+    white-space: nowrap;
+  }
+
+  .limit {
+    padding: 14px;
+    border-radius: 10px;
+    background: #f0f5ee;
+    margin-bottom: 18px;
+  }
+
+  .limit small {
+    display: block;
+    color: #59625a;
+    margin-bottom: 5px;
+  }
+
+  .limit strong {
+    font-size: 21px;
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cost-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 0.8fr 36px;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .custom-name {
+    display: none;
+  }
+
+  .cost-row.other .custom-name {
+    display: block;
+  }
+
+  .remove {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: #f0f1f2;
+    cursor: pointer;
+    font-size: 18px;
+  }
+
+  .add {
+    margin-top: 12px;
+    width: 100%;
+    height: 42px;
+    border: 1px dashed #aeb5ba;
+    background: #fff;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .summary {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #e1e4e6;
+  }
+
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 8px 0;
+  }
+
+  .summary-line.total,
+  .summary-line.saving {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .negative {
+    color: #d21f1f;
+  }
+
+  @media (max-width: 980px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .cost-row {
+      grid-template-columns: 1fr;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
+    .remove {
       width: 100%;
-      min-height: 100%;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--background);
-      color: var(--text);
+      height: 40px;
     }
-
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-    }
-
-    .calc {
-      width: min(var(--calc-width), calc(100vw - 24px));
-      padding: 22px;
-      border: 1px solid var(--border);
-      border-radius: var(--calc-radius);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-    }
-
-    .mode-switch {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      padding: 4px;
-      margin-bottom: 18px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #f0f0f0;
-    }
-
-    .mode-button {
-      min-height: 42px;
-      padding: 9px 12px;
-      border: 0;
-      border-radius: 9px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 160ms ease, color 160ms ease, transform 100ms ease;
-    }
-
-    .mode-button:hover {
-      color: var(--text);
-    }
-
-    .mode-button:active {
-      transform: scale(0.98);
-    }
-
-    .mode-button.active {
-      background: var(--active);
-      color: var(--active-text);
-    }
-
-    .label {
-      display: block;
-      margin-bottom: 7px;
-      font-size: 17.6px;
-      font-weight: 700;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 0;
-      border: 1px solid #cfcfcf;
-      border-radius: 8px;
-      font-size: 17.6px;
-      color: var(--text);
-      background: #ffffff;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #777;
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
-    }
-
-    .results {
-      margin-top: 17px;
-      padding-top: 3px;
-      border-top: 1px solid #ececec;
-    }
-
-    .result {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      margin-top: 12px;
-      font-size: 17.6px;
-      line-height: 1.35;
-    }
-
-    .result-label {
-      color: #3f3f3f;
-    }
-
-    .result-value {
-      flex-shrink: 0;
-      font-weight: 700;
-      text-align: right;
-    }
-
-    @media (max-width: 390px) {
-      .calc {
-        padding: 18px;
-      }
-
-      .mode-button {
-        font-size: 14px;
-      }
-
-      .label,
-      input,
-      .result {
-        font-size: 16px;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
+
 <body>
-  <main class="calc">
-    <div class="mode-switch" role="group" aria-label="Режим расчета">
-      <button
-        type="button"
-        class="mode-button active"
-        id="techModeButton"
-        aria-pressed="true"
-        onclick="setMode('tech')"
-      >
-        От техкоста
-      </button>
 
-      <button
-        type="button"
-        class="mode-button"
-        id="budgetModeButton"
-        aria-pressed="false"
-        onclick="setMode('budget')"
-      >
-        От бюджета
-      </button>
-    </div>
+<div class="wrap">
 
-    <label class="label" id="inputLabel" for="amount">
-      Реальный техкост (15%):
-    </label>
+  <h1>Калькулятор проекта</h1>
 
-    <input
-      type="text"
-      inputmode="numeric"
-      id="amount"
-      placeholder="Например: 500 000"
-      autocomplete="off"
-      oninput="handleInput(event)"
+  <div class="grid">
+
+    <!-- КАЛЬКУЛЯТОР МАРЖИНАЛЬНОСТИ -->
+
+    <section class="card">
+
+      <h2>Маржинальность</h2>
+
+      <div class="mode">
+        <button id="modeTech" class="active">
+          От техкоста
+        </button>
+
+        <button id="modeBudget">
+          От бюджета
+        </button>
+      </div>
+
+      <label id="mainLabel" for="mainInput">
+        Реальный техкост, ₽
+      </label>
+
+      <input
+        id="mainInput"
+        type="number"
+        min="0"
+        step="1000"
+        inputmode="numeric"
+        value=""
+        placeholder="Введите сумму"
+      />
+
+      <div class="results">
+
+        <div class="result" id="budgetRow">
+          <span>Бюджет (100%)</span>
+          <strong id="budgetResult">—</strong>
+        </div>
+
+        <div class="result">
+          <span>СЛ (20%)</span>
+          <strong id="slResult">—</strong>
+        </div>
+
+        <div class="result">
+          <span>Кост клиента (25%)</span>
+          <strong id="clientResult">—</strong>
+        </div>
+
+        <div
+          class="result"
+          id="techRow"
+          style="display: none;"
+        >
+          <span>Реальный техкост (15%)</span>
+          <strong id="techResult">—</strong>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- КАЛЬКУЛЯТОР СОСТАВА ТЕХКОСТА -->
+
+    <section
+      class="card"
+      id="projectCard"
     >
 
-    <div class="results">
-      <div class="result" id="techResultRow" hidden style="display:none;">
-        <span class="result-label">Реальный техкост (15%):</span>
-        <span class="result-value" id="techResult">-</span>
+      <h2>Рассчитать техкост</h2>
+
+      <div class="limit">
+
+        <small>
+          Максимально доступный техкост
+        </small>
+
+        <strong id="techLimit">
+          —
+        </strong>
+
       </div>
 
-      <div class="result">
-        <span class="result-label">Для СЛ (20%):</span>
-        <span class="result-value" id="slResult">-</span>
+      <div
+        class="rows"
+        id="rows"
+      ></div>
+
+      <button
+        class="add"
+        id="addRow"
+      >
+        + Добавить работу
+      </button>
+
+      <div class="summary">
+
+        <div class="summary-line total">
+
+          <span>
+            Реальные затраты
+          </span>
+
+          <span id="realCosts">
+            0 ₽
+          </span>
+
+        </div>
+
+        <div class="summary-line saving">
+
+          <span>
+            Экономия
+          </span>
+
+          <span id="savingValue">
+            —
+          </span>
+
+        </div>
+
       </div>
 
-      <div class="result">
-        <span class="result-label">Для клиента (25%):</span>
-        <span class="result-value" id="clientResult">-</span>
-      </div>
+    </section>
 
-      <div class="result" id="budgetResultRow">
-        <span class="result-label">Бюджет (100%):</span>
-        <span class="result-value" id="budgetResult">-</span>
-      </div>
-    </div>
-  </main>
+  </div>
 
-  <script>
-    let currentMode = 'tech';
+</div>
 
-    const amountInput = document.getElementById('amount');
-    const inputLabel = document.getElementById('inputLabel');
 
-    const techModeButton = document.getElementById('techModeButton');
-    const budgetModeButton = document.getElementById('budgetModeButton');
+<script>
 
-    const techResultRow = document.getElementById('techResultRow');
-    const budgetResultRow = document.getElementById('budgetResultRow');
+(() => {
 
-    const techResult = document.getElementById('techResult');
-    const slResult = document.getElementById('slResult');
-    const clientResult = document.getElementById('clientResult');
-    const budgetResult = document.getElementById('budgetResult');
+  'use strict';
 
-    function formatNumber(value) {
-      return Math.round(value).toLocaleString('ru-RU');
+
+  /* =========================
+     НАСТРОЙКИ
+  ========================= */
+
+
+  const SERVICES = [
+
+    {
+      name: 'Верстка и программинг проекта',
+      defaultCost: null
+    },
+
+    {
+      name: 'Написание текста / текстов',
+      defaultCost: null
+    },
+
+    {
+      name: 'Настройка аналитики',
+      defaultCost: 15000
+    },
+
+    {
+      name: 'Дизайн',
+      defaultCost: null
+    },
+
+    {
+      name: 'Закупка трафика',
+      defaultCost: null
+    },
+
+    {
+      name: 'Другое',
+      defaultCost: null
     }
 
-    function parseDigits(value) {
-      return value.replace(/\D/g, '');
-    }
+  ];
 
-    function clearResults() {
-      techResult.textContent = '-';
-      slResult.textContent = '-';
-      clientResult.textContent = '-';
-      budgetResult.textContent = '-';
-    }
 
-    function setMode(mode) {
-      if (mode !== 'tech' && mode !== 'budget') {
-        return;
+  const TECH_SHARE = 0.15;
+
+  const SL_SHARE = 0.20;
+
+  const CLIENT_COST_SHARE = 0.25;
+
+
+  let mode = 'tech';
+
+
+  /* =========================
+     DOM
+  ========================= */
+
+
+  const els = {
+
+    mainInput:
+      document.getElementById('mainInput'),
+
+    modeTech:
+      document.getElementById('modeTech'),
+
+    modeBudget:
+      document.getElementById('modeBudget'),
+
+    mainLabel:
+      document.getElementById('mainLabel'),
+
+    budgetRow:
+      document.getElementById('budgetRow'),
+
+    techRow:
+      document.getElementById('techRow'),
+
+    budgetResult:
+      document.getElementById('budgetResult'),
+
+    slResult:
+      document.getElementById('slResult'),
+
+    clientResult:
+      document.getElementById('clientResult'),
+
+    techResult:
+      document.getElementById('techResult'),
+
+    techLimit:
+      document.getElementById('techLimit'),
+
+    rows:
+      document.getElementById('rows'),
+
+    projectCard:
+      document.getElementById('projectCard'),
+
+    realCosts:
+      document.getElementById('realCosts'),
+
+    savingValue:
+      document.getElementById('savingValue'),
+
+    addRow:
+      document.getElementById('addRow')
+
+  };
+
+
+  /* =========================
+     ФОРМАТИРОВАНИЕ
+  ========================= */
+
+
+  const formatMoney = (value) => {
+
+    return new Intl.NumberFormat(
+      'ru-RU',
+      {
+        maximumFractionDigits: 0
       }
+    ).format(Number(value) || 0) + ' ₽';
 
-      currentMode = mode;
-      amountInput.value = '';
-      clearResults();
+  };
 
-      const isTechMode = mode === 'tech';
 
-      techModeButton.classList.toggle('active', isTechMode);
-      budgetModeButton.classList.toggle('active', !isTechMode);
+  /* =========================
+     ОСНОВНОЙ КАЛЬКУЛЯТОР
+  ========================= */
 
-      techModeButton.setAttribute('aria-pressed', String(isTechMode));
-      budgetModeButton.setAttribute('aria-pressed', String(!isTechMode));
 
-      inputLabel.textContent = isTechMode
-        ? 'Реальный техкост (15%):'
-        : 'Бюджет (100%):';
+  const hasMainValue = () => {
 
-      amountInput.placeholder = isTechMode
-        ? 'Например: 500 000'
-        : 'Например: 3 000 000';
+    return (
+      els.mainInput.value.trim() !== '' &&
+      Number.isFinite(
+        Number(els.mainInput.value)
+      ) &&
+      Number(els.mainInput.value) >= 0
+    );
 
-      techResultRow.style.display = isTechMode ? 'none' : 'flex';
-      budgetResultRow.style.display = isTechMode ? 'flex' : 'none';
+  };
 
-      amountInput.focus();
+
+  const getAvailableTechCost = () => {
+
+    if (!hasMainValue()) {
+
+      return null;
+
     }
 
-    function handleInput(event) {
-      const digits = parseDigits(event.target.value);
 
-      if (!digits) {
-        event.target.value = '';
-        clearResults();
-        return;
-      }
+    const value =
+      Number(els.mainInput.value);
 
-      const value = Number(digits);
-      event.target.value = formatNumber(value);
-      calculate(value);
+
+    if (mode === 'tech') {
+
+      return value;
+
     }
 
-    function calculate(value) {
-      if (!Number.isFinite(value) || value <= 0) {
-        clearResults();
-        return;
-      }
 
-      let budget;
-      let techCost;
+    return value * TECH_SHARE;
 
-      if (currentMode === 'tech') {
-        techCost = value;
-        budget = techCost / 0.15;
-      } else {
-        budget = value;
-        techCost = budget * 0.15;
-      }
+  };
 
-      const sl = budget * 0.20;
-      const client = budget * 0.25;
 
-      techResult.textContent = formatNumber(techCost);
-      slResult.textContent = formatNumber(sl);
-      clientResult.textContent = formatNumber(client);
-      budgetResult.textContent = formatNumber(budget);
+  const updateMargin = () => {
+
+    if (!hasMainValue()) {
+
+      els.budgetResult.textContent = '—';
+
+      els.slResult.textContent = '—';
+
+      els.clientResult.textContent = '—';
+
+      els.techResult.textContent = '—';
+
+      updateProject();
+
+      return;
+
     }
-  </script>
-</body>
-</html>
+
+
+    const value =
+      Number(els.mainInput.value);
+
+
+    const budget =
+      mode === 'tech'
+        ? value / TECH_SHARE
+        : value;
+
+
+    const tech =
+      mode === 'tech'
+        ? value
+        : value * TECH_SHARE;
+
+
+    els.budgetResult.textContent =
+      formatMoney(budget);
+
+
+    els.slResult.textContent =
+      formatMoney(
+        budget * SL_SHARE
+      );
+
+
+    els.clientResult.textContent =
+      formatMoney(
+        budget * CLIENT_COST_SHARE
+      );
+
+
+    els.techResult.textContent =
+      formatMoney(tech);
+
+
+    updateProject();
+
+  };
+
+
+  /* =========================
+     СО
