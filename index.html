@@ -372,8 +372,14 @@
     let total = 0;
 
     els.rows.querySelectorAll('.cost-input').forEach((input) => {
-      const value = Number(input.value);
-      if (Number.isFinite(value) && value > 0) total += value;
+      const value = parseMoneyInput(input.value);
+      if (
+        value !== null &&
+        Number.isFinite(value) &&
+        value > 0
+      ) {
+        total += value;
+      }
     });
 
     return total;
@@ -472,13 +478,12 @@
     customNameInput.value = customName;
 
     const costInput = document.createElement('input');
-    costInput.type = 'number';
-    costInput.min = '0';
-    costInput.step = '1000';
+    costInput.type = 'text';
     costInput.inputMode = 'numeric';
+    costInput.autocomplete = 'off';
     costInput.placeholder = 'Стоимость, ₽';
     costInput.className = 'cost-input';
-    costInput.value = cost;
+    costInput.value = cost ? formatMoneyInput(cost) : '';
 
     const removeButton = document.createElement('button');
     removeButton.className = 'remove';
@@ -503,7 +508,7 @@
       );
 
       if (selected?.defaultCost != null) {
-        costInput.value = selected.defaultCost;
+        costInput.value = formatMoneyInput(selected.defaultCost);
       } else if (!select.value) {
         costInput.value = '';
       }
@@ -512,7 +517,46 @@
       updateProject();
     });
 
-    costInput.addEventListener('input', updateProject);
+    costInput.addEventListener('input', () => {
+      const rawValue = costInput.value;
+      const selectionStart =
+        costInput.selectionStart ?? rawValue.length;
+
+      const digitsBeforeCaret = rawValue
+        .slice(0, selectionStart)
+        .replace(/\D/g, '')
+        .length;
+
+      const formatted = formatMoneyInput(rawValue);
+      costInput.value = formatted;
+
+      if (formatted) {
+        let digitCount = 0;
+        let newCaretPosition = formatted.length;
+
+        if (digitsBeforeCaret === 0) {
+          newCaretPosition = 0;
+        } else {
+          for (let i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted[i])) {
+              digitCount++;
+            }
+
+            if (digitCount >= digitsBeforeCaret) {
+              newCaretPosition = i + 1;
+              break;
+            }
+          }
+        }
+
+        costInput.setSelectionRange(
+          newCaretPosition,
+          newCaretPosition
+        );
+      }
+
+      updateProject();
+    });
     customNameInput.addEventListener('input', updateProject);
 
     removeButton.addEventListener('click', () => {
